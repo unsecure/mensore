@@ -1,0 +1,4 @@
+http://www.yahoo.co.jp/
+http://nonexistent.jp/
+http://example.com/
+http://www.yahoo.co.jp/hoge
