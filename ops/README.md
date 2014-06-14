@@ -3,10 +3,16 @@ Fabricを利用する
 http://www.fabfile.org/
 
 参考
+====
 
-http://shiumachi.hatenablog.com/entry/20130414/1365920515 
-http://dekokun.github.io/posts/2013-04-07.html 
-https://github.com/niratama/chibapm4.1/blob/master/fabric.md 
+* http://shiumachi.hatenablog.com/entry/20130414/1365920515
+
+* http://dekokun.github.io/posts/2013-04-07.html
+
+* https://github.com/niratama/chibapm4.1/blob/master/fabric.md
+
+基本的な使い方
+==============
 
 * 決まった作業をする
 
