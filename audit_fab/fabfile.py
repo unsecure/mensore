@@ -3,13 +3,13 @@ import ConfigParser
 from fabric.api import run, sudo, put, local, env, cd, execute
 from fabric.contrib.files import exists
 from fabric.decorators import task, roles
-from pprint import pprint
 
 DIR_BASE = '/tmp'
 DIR_LOG_COLLECTOR = DIR_BASE + '/log_collector'
 DIR_LOG_COLLECTOR_LIB = DIR_LOG_COLLECTOR + '/lib'
 DIR_LOG_COLLECTOR_LIB_FILE = DIR_LOG_COLLECTOR_LIB + '/File'
 DIR_LOG_COLLECTOR_LIB_TIME = DIR_LOG_COLLECTOR_LIB + '/Time'
+DIR_LOG_COLLECTOR_SECURE_LOG = DIR_LOG_COLLECTOR + '/secure_log'
 DIR_DATA_COLLECTOR = DIR_BASE + '/data_collector'
 DIR_MONITORING = DIR_BASE + '/monitoring'
 
@@ -97,6 +97,8 @@ def __setting_audit_client():
     # クライアントスクリプト実行
     with cd(DIR_LOG_COLLECTOR):
         sudo("LC_ALL=en_US.UTF-8 ./client.pl files.txt &")
+    with cd(DIR_LOG_COLLECTOR_SECURE_LOG):
+        sudo("LC_ALL=en_US.UTF-8 ./secure_logger.pl &")
     with cd(DIR_DATA_COLLECTOR):
         sudo("ps aux | LC_ALL=en_US.UTF-8 ./client.pl ps &")
     with cd(DIR_MONITORING):
@@ -110,8 +112,6 @@ def __deploy_mensore():
     """
     # log_collector 配布
     __deploy_log_collector()
-    # log_collector 用ライブラリを配布
-    __deploy_log_collector_lib()
     # data_collector 配布
     __deploy_data_collector()
     # monitoring 配布
@@ -125,28 +125,21 @@ def __deploy_log_collector():
     """
     if not exists(DIR_LOG_COLLECTOR):
         run("mkdir %s" % DIR_LOG_COLLECTOR)
-
-    put("../log_collector/client.pl", "%s/client.pl" % (DIR_LOG_COLLECTOR), mirror_local_mode=True)
-    put("../log_collector/files.txt", "%s/files.txt" % (DIR_LOG_COLLECTOR), mirror_local_mode=True)
-    put("../log_collector/server.pl", "%s/server.pl" % (DIR_LOG_COLLECTOR), mirror_local_mode=True)
-
-
-@roles("audit_server", "audit_client")
-def __deploy_log_collector_lib():
-    """
-    log_collector 用ライブラリの配布
-    """
-    if not exists(DIR_LOG_COLLECTOR):
-        run('mkdir %s' % (DIR_LOG_COLLECTOR))
     if not exists(DIR_LOG_COLLECTOR_LIB):
         run('mkdir %s' % (DIR_LOG_COLLECTOR_LIB))
     if not exists(DIR_LOG_COLLECTOR_LIB_FILE):
         run("mkdir %s" % (DIR_LOG_COLLECTOR_LIB_FILE))
     if not exists(DIR_LOG_COLLECTOR_LIB_TIME):
         run("mkdir %s" % (DIR_LOG_COLLECTOR_LIB_TIME))
+    if not exists(DIR_LOG_COLLECTOR_SECURE_LOG):
+        run("mkdir %s" % (DIR_LOG_COLLECTOR_SECURE_LOG))
 
+    put("../log_collector/client.pl", "%s/client.pl" % (DIR_LOG_COLLECTOR), mirror_local_mode=True)
+    put("../log_collector/files.txt", "%s/files.txt" % (DIR_LOG_COLLECTOR), mirror_local_mode=True)
+    put("../log_collector/server.pl", "%s/server.pl" % (DIR_LOG_COLLECTOR), mirror_local_mode=True)
     put("../log_collector/lib/File/Tail.pm", "%s/Tail.pm" % (DIR_LOG_COLLECTOR_LIB_FILE), mirror_local_mode=True)
     put("../log_collector/lib/Time/HiRes.pm", "%s/HiRes.pm" % (DIR_LOG_COLLECTOR_LIB_TIME), mirror_local_mode=True)
+    put("../log_collector/secure_log/secure_logger.pl", "%s/secure_logger.pl" % (DIR_LOG_COLLECTOR_SECURE_LOG), mirror_local_mode=True)
 
 
 @roles("audit_server", "audit_client")
@@ -172,8 +165,6 @@ def __deploy_monitoring():
     put("../monitoring/check-http.pl", "%s/check-http.pl" % (DIR_MONITORING), mirror_local_mode=True)
     put("../monitoring/check-load.pl", "%s/check-load.pl" % (DIR_MONITORING), mirror_local_mode=True)
     put("../monitoring/check-ping.pl", "%s/check-ping.pl" % (DIR_MONITORING), mirror_local_mode=True)
-    put("../monitoring/check-sudo.pl", "%s/check-sudo.pl" % (DIR_MONITORING), mirror_local_mode=True)
-    put("../monitoring/check-ssh.pl", "%s/check-ssh.pl" % (DIR_MONITORING), mirror_local_mode=True)
     put("../monitoring/defacement-detector.pl", "%s/defacement-detector.pl" % (DIR_MONITORING), mirror_local_mode=True)
     put("../monitoring/hosts.txt", "%s/hosts.txt" % (DIR_MONITORING), mirror_local_mode=True)
     put("../monitoring/load.txt", "%s/load.txt" % (DIR_MONITORING), mirror_local_mode=True)

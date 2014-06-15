@@ -1,1 +1,2 @@
-hoge.log			1
+hoge.log                    1
+secure_log/log_secure.log   5
