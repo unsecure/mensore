@@ -1,8 +1,16 @@
-#!/usr/bin/perl -w -I./lib/
+#!/usr/bin/perl -w -I../lib/
 
 use IO::Select;
 use IO::Socket;
 use IO::Handle;
+
+use Proc::Daemon;
+
+Proc::Daemon::Init({
+		work_dir        => '.',
+		pid_file        => 'pid',
+	}
+);
 
 open(LOG_FILE, ">> server.log") or die "can not open: $!";
 LOG_FILE->autoflush(1);

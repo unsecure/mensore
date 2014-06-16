@@ -5,20 +5,30 @@ config.ini にユーザ情報や環境構築対象ホストの情報を記述す
 
 ====
 
-* 監視全環境構築（基本これでOK）
-
-```
-fab all
-```
 
 * 監視サーバ環境構築
 
 ```
-fab server
+fab deploy_server
+```
+
+* 監視サーバ起動＆終了
+
+```
+fab start_server
+fab stop_server
 ```
 
 * 監視クライアント環境構築
 
 ```
-fab client
+fab deploy_client
 ```
+
+* 監視クライアント起動＆終了
+
+```
+fab start_client
+fab stop_client
+```
+
