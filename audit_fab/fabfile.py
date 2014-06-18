@@ -1,5 +1,6 @@
 #vim: fileencoding=utf8:
 import ConfigParser
+import os
 from fabric.api import run, sudo, put, local, env, cd, execute
 from fabric.contrib.files import exists
 from fabric.contrib.project import rsync_project
@@ -11,6 +12,7 @@ DIR_LIB = DIR_BASE + '/lib'
 DIR_LOG_COLLECTOR = DIR_BASE + '/log_collector'
 DIR_DATA_COLLECTOR = DIR_BASE + '/data_collector'
 DIR_MONITORING = DIR_BASE + '/monitoring'
+DIR_CRON = '/etc/cron.d'
 
 """
 初期化
@@ -47,8 +49,6 @@ def start_server():
         sudo("LANG=C ./server.pl")
     with cd(DIR_DATA_COLLECTOR):
         sudo("LANG=C ./server.pl")
-    with cd(DIR_MONITORING):
-        pass
 
 @roles("audit_server")
 def stop_server():
@@ -56,8 +56,6 @@ def stop_server():
         sudo("kill -TERM `cat pid`")
     with cd(DIR_DATA_COLLECTOR):
         sudo("kill -TERM `cat pid`")
-    with cd(DIR_MONITORING):
-        pass
 
 """
 クライアント
@@ -71,20 +69,27 @@ def deploy_client():
 @roles("audit_client")
 def start_client():
     with cd(DIR_LOG_COLLECTOR):
-        sudo("LANG=C ./client.pl files.txt")
-    with cd(DIR_LOG_COLLECTOR_SECURE_LOG):
-        sudo("LANG=C ./secure_logger.pl")
+        sudo("LANG=C perl -I%s ./client.pl %s files.txt" % (DIR_LIB, audit_server[0]))
     with cd(DIR_MONITORING):
         pass
+#    with cd(DIR_LOG_COLLECTOR_SECURE_LOG):
+#        sudo("LANG=C ./secure_logger.pl")
+
+    # cronの設定
+    put('cron', DIR_BASE + "/cron")
+    sudo("mv %s %s" % (DIR_BASE + "/cron", DIR_CRON + "/mensore"))
+    sudo("chown root:root %s" % DIR_CRON + "/mensore")
+    sudo("chmod 644 %s" % DIR_CRON + "/mensore")
 
 @roles("audit_client")
 def stop_client():
     with cd(DIR_LOG_COLLECTOR):
         sudo("kill -TERM `cat pid`")
-    with cd(DIR_LOG_COLLECTOR_SECURE_LOG):
-        sudo("kill -TERM `cat pid`")
-    with cd(DIR_MONITORING):
-        pass
+#    with cd(DIR_LOG_COLLECTOR_SECURE_LOG):
+#        sudo("kill -TERM `cat pid`")
+
+    # cronの設定
+    sudo("rm %s" % DIR_CRON + "/mensore")
 
 """
 内部関数
@@ -106,3 +111,8 @@ def __deploy_mensore():
     rsync_project(local_dir="../data_collector/", remote_dir=DIR_DATA_COLLECTOR)
     # monitoring 配布
     rsync_project(local_dir="../monitoring/", remote_dir=DIR_MONITORING)
+
+    # サーバー
+    os.system("echo %s > server" % audit_server[0])
+    put('server', DIR_BASE + "/server")
+

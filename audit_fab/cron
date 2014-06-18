@@ -1,0 +1,8 @@
+#*/10 * * * * root /usr/lib/sa/sa1 1 1
+
+*/5 * * * * root cd /tmp/mensore/monitoring/client/ && ./check-load.pl load.txt >> all.log
+
+*/5 * * * * root ps aux        | /tmp/mensore/data_collector/client.pl `cat /tmp/mensore/server` ps
+*/5 * * * * root netstat -atnp | /tmp/mensore/data_collector/client.pl `cat /tmp/mensore/server` netstat
+*/5 * * * * root last -n 50    | /tmp/mensore/data_collector/client.pl `cat /tmp/mensore/server` last
+*/5 * * * * root w             | /tmp/mensore/data_collector/client.pl `cat /tmp/mensore/server` w
