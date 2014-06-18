@@ -4,6 +4,11 @@ use strict;
 use warnings;
 use Socket;
 
+my $remote_host = shift;
+unless( $remote_host ){
+	die "missing remote host";
+}
+
 my $tag = shift;
 unless( $tag ){
 	die "missing tag";
@@ -14,7 +19,6 @@ my $sock;
 socket($sock, PF_INET, SOCK_STREAM, getprotobyname('tcp'))
 	or die "Cannot create socket: $!";
 
-my $remote_host = 'localhost';
 my $packed_remote_host = inet_aton($remote_host)
 	or die "Cannot pack $remote_host: $!";
 
