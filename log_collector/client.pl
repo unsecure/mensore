@@ -5,12 +5,21 @@ use warnings;
 use File::Tail;
 use Socket;
 
+my $remote_host = shift;
+unless( $remote_host ){
+	die "missing remote host";
+}
+
+my $file = shift; 
+unless( $file ){
+	die "missing file";
+}
+
 # サーバーと接続
 my $sock;
 socket($sock, PF_INET, SOCK_STREAM, getprotobyname('tcp'))
 	or die "Cannot create socket: $!";
 
-my $remote_host = 'localhost';
 my $packed_remote_host = inet_aton($remote_host)
 	or die "Cannot pack $remote_host: $!";
 
@@ -26,7 +35,6 @@ $| = 1;
 select $old_handle;
 
 # 監視対象の設定
-my $file = shift; 
 open(my $fh, "<", $file) or die "Cannot open $file: $!";
 
 my @files;
