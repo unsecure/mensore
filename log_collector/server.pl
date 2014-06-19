@@ -6,13 +6,18 @@ use IO::Handle;
 
 use Proc::Daemon;
 
+my $out_file = shift;
+unless ($out_file) {
+	die "missing out file";
+}
+
 Proc::Daemon::Init({
 		work_dir        => '.',
 		pid_file        => 'pid',
 	}
 );
 
-open(LOG_FILE, ">> server.log") or die "can not open: $!";
+open(LOG_FILE, ">> $out_file") or die "can not open: $!";
 LOG_FILE->autoflush(1);
 
 my $listener = new IO::Socket::INET(Listen => 1, LocalPort => 6666, ReuseAddr => 1);

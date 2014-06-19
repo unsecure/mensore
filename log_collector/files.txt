@@ -1,2 +1,1 @@
-hoge.log                    1
-secure_log/log_secure.log   5
+/tmp/mensore/logs/client.log	1

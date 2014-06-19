@@ -12,6 +12,8 @@ DIR_LIB = DIR_BASE + '/lib'
 DIR_LOG_COLLECTOR = DIR_BASE + '/log_collector'
 DIR_DATA_COLLECTOR = DIR_BASE + '/data_collector'
 DIR_MONITORING = DIR_BASE + '/monitoring'
+DIR_LOGS = DIR_BASE + '/logs'
+DIR_DATA = DIR_BASE + '/data'
 DIR_CRON = '/etc/cron.d'
 
 """
@@ -27,75 +29,86 @@ env.user = inifile.get("user", "name")
 env.password = inifile.get("user", "passwd")
 
 # ホストの設定
-audit_server = inifile.get("host", "audit_server").split(",")
-audit_client = inifile.get("host", "audit_client").split(",")
+server = inifile.get("host", "server").split(",")
+client = inifile.get("host", "client").split(",")
 env.roledefs = {
-	'audit_server': audit_server,
-	'audit_client': audit_client
+	'server': server,
+	'client': client
 }
 
 """
 サーバー
 """
 
-@roles("audit_server")
+@roles("server")
 def deploy_server():
-    run("hostname")
     __deploy_mensore()
 
-@roles("audit_server")
+@roles("server")
 def start_server():
-    with cd(DIR_LOG_COLLECTOR):
-        sudo("LANG=C ./server.pl")
-    with cd(DIR_DATA_COLLECTOR):
-        sudo("LANG=C ./server.pl")
 
-@roles("audit_server")
+    run("touch %s" % DIR_LOGS + "/server.log")
+
+    with cd(DIR_LOG_COLLECTOR):
+        sudo("LANG=C ./server.pl %s" % DIR_LOGS + "/server.log")
+    with cd(DIR_DATA_COLLECTOR):
+        sudo("LANG=C ./server.pl %s" % DIR_DATA )
+
+@roles("server")
 def stop_server():
     with cd(DIR_LOG_COLLECTOR):
         sudo("kill -TERM `cat pid`")
     with cd(DIR_DATA_COLLECTOR):
         sudo("kill -TERM `cat pid`")
 
+@roles("server")
+def clean_server():
+    __clean_mensore()
+
 """
 クライアント
 """
 
-@roles("audit_client")
+@roles("client")
 def deploy_client():
-    run("hostname")
     __deploy_mensore()
 
-@roles("audit_client")
+@roles("client")
 def start_client():
+
+    run("touch %s" % DIR_LOGS + "/client.log");
+
     with cd(DIR_LOG_COLLECTOR):
-        sudo("LANG=C perl -I%s ./client.pl %s files.txt" % (DIR_LIB, audit_server[0]))
-    with cd(DIR_MONITORING):
-        pass
-#    with cd(DIR_LOG_COLLECTOR_SECURE_LOG):
-#        sudo("LANG=C ./secure_logger.pl")
+        sudo("LANG=C ./client.pl %s files.txt" % server[0])
+    with cd(DIR_MONITORING+"/client"):
+        sudo("LANG=C ./secure.pl %s" % DIR_LOGS + "/client.log")
 
     # cronの設定
+	__gen_cron()
     put('cron', DIR_BASE + "/cron")
     sudo("mv %s %s" % (DIR_BASE + "/cron", DIR_CRON + "/mensore"))
     sudo("chown root:root %s" % DIR_CRON + "/mensore")
     sudo("chmod 644 %s" % DIR_CRON + "/mensore")
 
-@roles("audit_client")
+@roles("client")
 def stop_client():
     with cd(DIR_LOG_COLLECTOR):
         sudo("kill -TERM `cat pid`")
-#    with cd(DIR_LOG_COLLECTOR_SECURE_LOG):
-#        sudo("kill -TERM `cat pid`")
+    with cd(DIR_MONITORING+"/client"):
+        sudo("kill -TERM `cat secure.pid`")
 
     # cronの設定
     sudo("rm %s" % DIR_CRON + "/mensore")
+
+@roles("client")
+def clean_client():
+    __clean_mensore()
 
 """
 内部関数
 """
 
-@roles("audit_server", "audit_client")
+@roles("server", "client")
 def __deploy_mensore():
     """
     全スクリプトの配布
@@ -112,7 +125,31 @@ def __deploy_mensore():
     # monitoring 配布
     rsync_project(local_dir="../monitoring/", remote_dir=DIR_MONITORING)
 
+    run("mkdir -p %s" % DIR_LOGS)
+    run("mkdir -p %s" % DIR_DATA)
+
     # サーバー
-    os.system("echo %s > server" % audit_server[0])
+    os.system("echo %s > server" % server[0])
     put('server', DIR_BASE + "/server")
+
+@roles("server", "client")
+def __clean_mensore():
+
+    sudo("rm -rf %s" % DIR_BASE)
+
+def __gen_cron():
+
+    f = open('cron', 'w')
+
+    CRON = ""
+    CRON += "*/5 * * * * root cd /tmp/mensore/monitoring/client/ && ./check-load.pl load.txt >> " + DIR_LOGS + "/client.log\n"
+
+    CRON += "*/5 * * * * root ps aux        | /tmp/mensore/data_collector/client.pl " + server[0] + " ps\n";
+    CRON += "*/5 * * * * root netstat -atnp | /tmp/mensore/data_collector/client.pl " + server[0] + " netstat\n"
+    CRON += "*/5 * * * * root last -n 50    | /tmp/mensore/data_collector/client.pl " + server[0] + " last\n"
+    CRON += "*/5 * * * * root w             | /tmp/mensore/data_collector/client.pl " + server[0] + " w\n"
+    
+    f.write(CRON)
+
+    f.close()
 

@@ -7,9 +7,14 @@ use IO::Handle;
 
 use Proc::Daemon;
 
+my $out_file = shift;
+unless ($out_file) {
+	die "missing out file";
+}
+
 Proc::Daemon::Init({
 		work_dir        => '.',
-		pid_file        => 'secure_logger.pid',
+		pid_file        => 'secure.pid',
 	}
 );
 
@@ -20,20 +25,22 @@ my $file = File::Tail->new(
 );
 my $line;
 
-open(FH, ">> log_secure.log") or die "can not open: $!";
+open(FH, ">> $out_file") or die "can not open: $!";
 FH->autoflush(1);
 
 while (defined($line=$file->read)) {
 
-    if ($line =~ /sshd/) {
+    if ($line =~ /sshd\[\d+\]: /) {
         if (&judgeSSH($line)) {
-            print FH "$line";
+            my ($head, $body) = split(/: /,$line);
+            print FH "[SSH] $body";
         }
     }
 
-    if ($line =~ /sudo/) {
+    if ($line =~ /sudo: /) {
         if (&judgeSUDO($line)) {
-            print FH "$line";
+            my ($head, $body) = split(/: /,$line);
+            print FH "[SUDO] $body";
         }
     }
 }
@@ -72,6 +79,9 @@ sub judgeSUDO {
         return 1;
     }
     if ($line =~ /pam_unix\(su:session\)/i) {
+        return 1;
+    }
+    if ($line =~ /COMMAND=/i) {
         return 1;
     }
 
