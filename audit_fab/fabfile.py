@@ -168,8 +168,8 @@ def __gen_server_cron():
     f = open('server.cron', 'w')
 
     CRON = ""
-    CRON += "*/5 * * * * root cd /tmp/mensore/monitoring/server/ && ./check-ping.pl hosts.txt | nc localhost 6666\n";
-    CRON += "*/5 * * * * root cd /tmp/mensore/monitoring/server/ && ./check-http.pl urls.txt | nc localhost 6666\n";
+    CRON += "*/5 * * * * root cd /opt/mensore/monitoring/server/ && ./check-ping.pl hosts.txt | nc localhost 6666\n";
+    CRON += "*/5 * * * * root cd /opt/mensore/monitoring/server/ && ./check-http.pl urls.txt | nc localhost 6666\n";
 
     f.write(CRON)
     f.close()
@@ -179,9 +179,9 @@ def __gen_client_cron():
     f = open('client.cron', 'w')
 
     CRON = ""
-    CRON += "*/5 * * * * root cd /tmp/mensore/monitoring/client/ && ./check-load.pl load.txt >> " + DIR_LOGS + "/client.log\n"
-    CRON += "*/5 * * * * root cd /tmp/mensore/monitoring/client/ && ./cron.pl | " + DATA_COLLECTOR_CLIENT + " " + server[0] + " cron\n";
-    CRON += "*/5 * * * * root cd /tmp/mensore/monitoring/client/ && ./at.pl | " + DATA_COLLECTOR_CLIENT + " " + server[0] + " at\n";
+    CRON += "*/5 * * * * root cd /opt/mensore/monitoring/client/ && ./check-load.pl load.txt >> " + DIR_LOGS + "/client.log\n"
+    CRON += "*/5 * * * * root cd /opt/mensore/monitoring/client/ && ./cron.pl | " + DATA_COLLECTOR_CLIENT + " " + server[0] + " cron\n";
+    CRON += "*/5 * * * * root cd /opt/mensore/monitoring/client/ && ./at.pl | " + DATA_COLLECTOR_CLIENT + " " + server[0] + " at\n";
 
     CRON += "*/5 * * * * root ps aux        | " + DATA_COLLECTOR_CLIENT + " " + server[0] + " ps\n";
     CRON += "*/5 * * * * root netstat -atnp | " + DATA_COLLECTOR_CLIENT + " " + server[0] + " netstat\n"
