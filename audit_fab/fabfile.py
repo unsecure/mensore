@@ -154,10 +154,6 @@ def __deploy_mensore():
     run("mkdir -p %s" % DIR_LOGS)
     run("mkdir -p %s" % DIR_DATA)
 
-    # サーバー
-    os.system("echo %s > server" % server[0])
-    put('server', DIR_BASE + "/server")
-
 @roles("server", "client")
 def __clean_mensore():
 
