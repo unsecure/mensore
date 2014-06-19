@@ -32,15 +32,13 @@ while (defined($line=$file->read)) {
 
     if ($line =~ /sshd\[\d+\]: /) {
         if (&judgeSSH($line)) {
-            my ($head, $body) = split(/: /,$line);
-            print FH "[SSH] $body";
+            print FH "[SSH] $line";
         }
     }
 
     if ($line =~ /sudo: /) {
         if (&judgeSUDO($line)) {
-            my ($head, $body) = split(/: /,$line);
-            print FH "[SUDO] $body";
+            print FH "[SUDO] $line";
         }
     }
 }
