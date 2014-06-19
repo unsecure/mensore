@@ -156,7 +156,7 @@ def __gen_cron():
 
     f = open('cron', 'w')
 
-    data_collector = "/tmp/mensore/data_collector/client.pl"
+    data_collector = "/opt/mensore/data_collector/client.pl"
 
     CRON = ""
 
