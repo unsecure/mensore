@@ -18,7 +18,7 @@ use FileHandle;
 #use IO::Seekable; # does not define SEEK_SET in 5005.02
 use File::stat;
 use Carp;
-use Time::HiRes qw ( time sleep ); #import hires microsecond timers
+#use Time::HiRes qw ( time sleep ); #import hires microsecond timers
 
 sub SEEK_SET   () {0;}
 sub SEEK_CUR () {1;}

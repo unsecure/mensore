@@ -6,13 +6,18 @@ use IO::Handle;
 
 use Proc::Daemon;
 
+my $out_dir = shift;
+unless ($out_dir) {
+	die "missing out dir";
+}
+
 Proc::Daemon::Init({
 		work_dir        => '.',
 		pid_file        => 'pid',
 	}
 );
 
-my $DATA_DIR = "data";
+my $DATA_DIR = $out_dir;
 
 sub save_data {
 	my $host = shift;
