@@ -31,8 +31,16 @@ env.user = inifile.get("user", "name")
 env.password = inifile.get("user", "passwd")
 
 # ホストの設定
+portforwarded = int(inifile.get("host", "portforwarded"))
 server = inifile.get("host", "server").split(",")
 client = inifile.get("host", "client").split(",")
+
+# ポートフォワードならポートも取得
+if portforwarded:
+    server_port = inifile.get("host", "server_port").split(",")
+    client_port = inifile.get("host", "client_port").split(",")
+    all_port = list(set(server_port).union(set(client_port)))
+
 env.roledefs = {
 	'server': server,
 	'client': client
@@ -44,6 +52,14 @@ env.roledefs = {
 
 @roles("server", "client")
 def add_mensore():
+    if portforwarded:
+        for port in all_port:
+            env.port = port
+            __add_mensore()
+    else:
+        __add_mensore()
+
+def __add_mensore():
     env.user = inifile.get("default_user", "name")
     env.password = inifile.get("default_user", "passwd")
     new_user = inifile.get("user", "name")
