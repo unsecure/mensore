@@ -27,7 +27,7 @@ foreach my $host (@hosts) {
 	my $alive = $ping->ping($host, 1);
 
 	unless( $alive ){
-		print "PING NG $host\n";
+		print "[PING] NG $host\n";
 	}
 
 }
