@@ -166,6 +166,7 @@ def __gen_server_cron():
     CRON = ""
     CRON += "*/5 * * * * root cd /opt/mensore/monitoring/server/ && ./check-ping.pl hosts.txt | nc localhost 6666\n";
     CRON += "*/5 * * * * root cd /opt/mensore/monitoring/server/ && ./check-http.pl urls.txt | nc localhost 6666\n";
+    CRON += "*/5 * * * * root cd /opt/mensore/monitoring/server/ && ./defacement-detector.pl check | nc localhost 6666\n";
 
     f.write(CRON)
     f.close()
