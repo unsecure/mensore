@@ -1,5 +1,0 @@
-*/5 * * * * root cd /tmp/mensore/monitoring/client/ && ./check-load.pl load.txt >> /tmp/mensore/logs/client.log
-*/5 * * * * root ps aux        | /tmp/mensore/data_collector/client.pl 192.168.11.18 ps
-*/5 * * * * root netstat -atnp | /tmp/mensore/data_collector/client.pl 192.168.11.18 netstat
-*/5 * * * * root last -n 50    | /tmp/mensore/data_collector/client.pl 192.168.11.18 last
-*/5 * * * * root w             | /tmp/mensore/data_collector/client.pl 192.168.11.18 w
