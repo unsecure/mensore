@@ -6,7 +6,7 @@ from fabric.contrib.files import exists
 from fabric.contrib.project import rsync_project
 from fabric.decorators import task, roles
 
-DIR_BASE = '/tmp/mensore'
+DIR_BASE = '/opt/mensore'
 
 DIR_LIB = DIR_BASE + '/lib'
 DIR_LOG_COLLECTOR = DIR_BASE + '/log_collector'
@@ -37,6 +37,20 @@ env.roledefs = {
 	'server': server,
 	'client': client
 }
+
+"""
+全環境
+"""
+
+@roles("server", "client")
+def add_mensore():
+    env.user = inifile.get("default_user", "name")
+    env.password = inifile.get("default_user", "passwd")
+    new_user = inifile.get("user", "name")
+    new_password = inifile.get("user", "passwd")
+    sudo("adduser %s -d /home/mensore -g users -G wheel -s /bin/bash" % new_user)
+    sudo("echo -e \"%s\\n%s\" | passwd %s" % (new_password, new_password, new_user))
+    run("id")
 
 """
 サーバー
@@ -125,7 +139,8 @@ def __deploy_mensore():
     全スクリプトの配布
     """
 
-    run("mkdir -p %s" % DIR_BASE)
+    sudo("mkdir -p %s" % DIR_BASE)
+    sudo("chmod 777 %s" % DIR_BASE)
 
     # lib 配布
     rsync_project(local_dir="../lib/", remote_dir=DIR_LIB)
