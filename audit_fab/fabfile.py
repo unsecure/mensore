@@ -141,13 +141,17 @@ def __gen_cron():
 
     f = open('cron', 'w')
 
+    data_collector = "/tmp/mensore/data_collector/client.pl"
+
     CRON = ""
     CRON += "*/5 * * * * root cd /tmp/mensore/monitoring/client/ && ./check-load.pl load.txt >> " + DIR_LOGS + "/client.log\n"
+    CRON += "*/5 * * * * root cd /tmp/mensore/monitoring/client/ && ./cron.pl | " + data_collector + " " + server[0] + " cron\n";
+    CRON += "*/5 * * * * root cd /tmp/mensore/monitoring/client/ && ./at.pl | " + data_collector + " " + server[0] + " at\n";
 
-    CRON += "*/5 * * * * root ps aux        | /tmp/mensore/data_collector/client.pl " + server[0] + " ps\n";
-    CRON += "*/5 * * * * root netstat -atnp | /tmp/mensore/data_collector/client.pl " + server[0] + " netstat\n"
-    CRON += "*/5 * * * * root last -n 50    | /tmp/mensore/data_collector/client.pl " + server[0] + " last\n"
-    CRON += "*/5 * * * * root w             | /tmp/mensore/data_collector/client.pl " + server[0] + " w\n"
+    CRON += "*/5 * * * * root ps aux        | " + data_collector + " " + server[0] + " ps\n";
+    CRON += "*/5 * * * * root netstat -atnp | " + data_collector + " " + server[0] + " netstat\n"
+    CRON += "*/5 * * * * root last -n 50    | " + data_collector + " " + server[0] + " last\n"
+    CRON += "*/5 * * * * root w             | " + data_collector + " " + server[0] + " w\n"
     
     f.write(CRON)
 
