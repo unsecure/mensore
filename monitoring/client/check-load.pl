@@ -9,13 +9,13 @@ unless( `uptime` =~ /load average(?:s)?: (.+)/ ){
 my ($la1, $la5, $la15) = split(/,\s*/, $1);
 
 if( $la1 > $limit1 ){
-	print "load average 1 min: $la1 > $limit1\n";
+	print "[LOAD] load average 1 min: $la1 > $limit1\n";
 }
 
 if( $la5 > $limit5 ){
-	print "load average 5 min: $la5 > $limit5\n";
+	print "[LOAD] load average 5 min: $la5 > $limit5\n";
 }
 
 if( $la15 > $limit15 ){
-	print "load average 15 min: $la15 > $limit15\n";
+	print "[LOAD] load average 15 min: $la15 > $limit15\n";
 }
