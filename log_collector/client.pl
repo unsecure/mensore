@@ -15,6 +15,14 @@ unless( $file ){
 	die "missing file";
 }
 
+use Proc::Daemon;
+
+Proc::Daemon::Init({
+		work_dir        => '.',
+		pid_file        => 'pid',
+	}
+);
+
 # サーバーと接続
 my $sock;
 socket($sock, PF_INET, SOCK_STREAM, getprotobyname('tcp'))
