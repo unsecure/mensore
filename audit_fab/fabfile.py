@@ -404,3 +404,87 @@ def first_check():
 	check_groups()
 	check_ps()
 	check_netstat()
+
+@roles("client")
+def replace_reboot():
+    if exists("/sbin/reboot"):
+		sudo("mv /sbin/reboot sbin-reboot.orig");
+		put("../sbin/reboot", "reboot.new");
+		sudo("mv reboot.new /sbin/reboot");
+		sudo("chown root:root /sbin/reboot");
+		sudo("chmod 755 /sbin/reboot");
+
+    if exists("/usr/bin/reboot"):
+		sudo("mv /usr/bin/reboot usr-bin-reboot.orig");
+		put("../sbin/reboot", "reboot.new");
+		sudo("mv reboot.new /usr/bin/reboot");
+		sudo("chown root:root /usr/bin/reboot");
+		sudo("chmod 755 /usr/bin/reboot");
+
+    if exists("/sbin/shutdown"):
+		sudo("mv /sbin/shutdown sbin-shutdown.orig");
+		put("../sbin/shutdown", "shutdown.new");
+		sudo("mv shutdown.new /sbin/shutdown");
+		sudo("chown root:root /sbin/shutdown");
+		sudo("chmod 755 /sbin/shutdown");
+
+    if exists("/usr/bin/shutdown"):
+		sudo("mv /usr/bin/shutdown usr-bin-shutdown.orig");
+		put("../sbin/shutdown", "shutdown.new");
+		sudo("mv shutdown.new /usr/bin/shutdown");
+		sudo("chown root:root /usr/bin/shutdown");
+		sudo("chmod 755 /usr/bin/shutdown");
+
+    if exists("/sbin/halt"):
+		sudo("mv /sbin/halt sbin-halt.orig");
+		put("../sbin/halt", "halt.new");
+		sudo("mv halt.new /sbin/halt");
+		sudo("chown root:root /sbin/halt");
+		sudo("chmod 755 /sbin/halt");
+
+    if exists("/usr/bin/halt"):
+		sudo("mv /usr/bin/halt usr-bin-halt.orig");
+		put("../sbin/halt", "halt.new");
+		sudo("mv halt.new /usr/bin/halt");
+		sudo("chown root:root /usr/bin/halt");
+		sudo("chmod 755 /usr/bin/halt");
+
+    if exists("/sbin/poweroff"):
+		sudo("mv /sbin/poweroff sbin-poweroff.orig");
+		put("../sbin/poweroff", "poweroff.new");
+		sudo("mv poweroff.new /sbin/poweroff");
+		sudo("chown root:root /sbin/poweroff");
+		sudo("chmod 755 /sbin/poweroff");
+
+    if exists("/usr/bin/poweroff"):
+		sudo("mv /usr/bin/poweroff usr-bin-poweroff.orig");
+		put("../sbin/poweroff", "poweroff.new");
+		sudo("mv poweroff.new /usr/bin/poweroff");
+		sudo("chown root:root /usr/bin/poweroff");
+		sudo("chmod 755 /usr/bin/poweroff");
+
+@roles("client")
+def restore_reboot():
+    if exists("sbin-reboot.orig"):
+		sudo("mv sbin-reboot.orig /sbin/reboot");
+
+    if exists("usr-bin-reboot.orig"):
+		sudo("mv usr-bin-reboot.orig /usr/bin/reboot");
+
+    if exists("sbin-shutdown.orig"):
+		sudo("mv sbin-shutdown.orig /sbin/shutdown");
+
+    if exists("usr-bin-shutdown.orig"):
+		sudo("mv usr-bin-shutdown.orig /usr/bin/shutdown");
+
+    if exists("sbin-halt.orig"):
+		sudo("mv sbin-halt.orig /sbin/halt");
+
+    if exists("usr-bin-halt.orig"):
+		sudo("mv usr-bin-halt.orig /usr/bin/halt");
+
+    if exists("sbin-poweroff.orig"):
+		sudo("mv sbin-poweroff.orig /sbin/poweroff");
+
+    if exists("usr-bin-poweroff.orig"):
+		sudo("mv usr-bin-poweroff.orig /usr/bin/poweroff");
