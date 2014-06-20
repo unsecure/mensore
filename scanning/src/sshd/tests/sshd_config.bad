@@ -1,0 +1,20 @@
+# sshd_config
+# vim: filetype=sshdconfig
+# This is bad config
+PermitRootLogin yes
+PermitRootLogin	yes
+PermitRootLogin    	     yes
+PermitRootLogin    	     yes # comment
+PermitRootLogin    	     yes	 	# comment
+
+# blank test
+	PermitRootLogin yes
+	PermitRootLogin yes			
+
+RhostsRSAAuthentication yes
+PasswordAuthentication yes
+PermitEmptyPasswords yes
+ChallengeResponseAuthentication yes
+Protocol 1
+Protocol 2,1
+Protocol 1,2
