@@ -50,7 +50,7 @@ while(my $line = readline $fh){
     chomp $line;
 	my ($name, $interval) = split(/\s+/, $line);
 	print "add $name interval=$interval\n";
-	push(@files,File::Tail->new(name=>$name,maxinterval=>$interval,ignore_nonexistant=>1));
+	push(@files,File::Tail->new(name=>$name,maxinterval=>$interval));
 }
 
 close $fh;
