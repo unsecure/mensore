@@ -6,7 +6,7 @@ from fabric.contrib.files import exists
 from fabric.contrib.project import rsync_project
 from fabric.decorators import task, roles
 
-DIR_BASE = '/opt/mensore'
+DIR_BASE = '/home/mensore'
 
 DIR_LIB = DIR_BASE + '/lib'
 DIR_LOG_COLLECTOR = DIR_BASE + '/log_collector'
@@ -78,13 +78,10 @@ def deploy_server():
 
 @roles("server")
 def start_server():
-
-    run("touch %s" % DIR_LOGS + "/server.log")
-
     with cd(DIR_LOG_COLLECTOR):
-        sudo("LANG=C ./server.pl %s" % DIR_LOGS + "/server.log")
+        sudo("./server start")
     with cd(DIR_DATA_COLLECTOR):
-        sudo("LANG=C ./server.pl %s" % DIR_DATA )
+        sudo("./server start")
 
 	__gen_server_cron()
     put('server.cron', DIR_BASE + "/server.cron")
@@ -95,9 +92,9 @@ def start_server():
 @roles("server")
 def stop_server():
     with cd(DIR_LOG_COLLECTOR):
-        sudo("kill -TERM `cat pid`")
+        sudo("./server stop")
     with cd(DIR_DATA_COLLECTOR):
-        sudo("kill -TERM `cat pid`")
+        sudo("./server stop")
 
     # cronの設定
     sudo("rm %s" % DIR_CRON + "/mensore-server")
@@ -117,12 +114,10 @@ def deploy_client():
 @roles("client")
 def start_client():
 
-    run("touch %s" % DIR_LOGS + "/client.log");
-
     with cd(DIR_LOG_COLLECTOR):
-        sudo("LANG=C ./client.pl %s files.txt" % server[0])
+        sudo("./client start %s files.txt" % server[0])
     with cd(DIR_MONITORING+"/client"):
-        sudo("LANG=C ./secure.pl %s" % DIR_LOGS + "/client.log")
+        sudo("./secure start %s" % DIR_LOGS + "/client.log")
 
     # cronの設定
 	__gen_client_cron()
@@ -134,9 +129,9 @@ def start_client():
 @roles("client")
 def stop_client():
     with cd(DIR_LOG_COLLECTOR):
-        sudo("kill -TERM `cat pid`")
+        sudo("./client stop")
     with cd(DIR_MONITORING+"/client"):
-        sudo("kill -TERM `cat secure.pid`")
+        sudo("./secure stop")
 
     # cronの設定
     sudo("rm %s" % DIR_CRON + "/mensore-client")
