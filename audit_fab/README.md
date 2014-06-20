@@ -3,6 +3,24 @@
 
 config.ini にユーザ情報や環境構築対象ホストの情報を記述する
 
+* ポートフォワードじゃない場合
+```
+[host]
+portforwarded = 0
+server = 192.168.33.11
+client = 192.168.33.12,192.168.33.11
+```
+
+* ポートフォワードの場合 (server と client はフォワードしているホストを指定)
+```
+[host]
+portforwarded = 1
+server = 127.0.0.1
+client = 127.0.0.1
+server_port = 10001
+client_port = 10001, 10002
+```
+
 ====
 
 * サーバ全台に mensore ユーザを作成

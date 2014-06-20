@@ -4,13 +4,13 @@
 # 使い方
 # ======
 # 
-# defacement-detector.pl <url> <cmd> <args>
+# defacement-detector.pl <cmd> <args>
 # 
 # 初期化:
-#   defacement-detector.pl <url> init [<count=5>]
+#   defacement-detector.pl init <url> [<count=5>]
 #
 # チェック:
-#   defacement-detector.pl <url> check
+#   defacement-detector.pl check
 #
 # オプション
 # ==========
@@ -20,17 +20,28 @@
 #			動的部分が多い場合は大きい数字(10~20)にする
 #
 
-my $TMP_DIR = "/tmp/defacement-detector";
+my $TMP_DIR = "/opt/mensore/defacement-detector";
+my $URLS_FILE = "$TMP_DIR/urls";
 
-my $url = shift;
 my $cmd = shift;
 
-if( index($url, "://") < 0 ){
-	$url = "http://$url";
+unless( $cmd ){
+	die "missing cmd";
 }
 
-my $data_dir = "$TMP_DIR/$url";
-$data_dir =~ s/:\/\//\//g;
+sub get_data_dir
+{
+	my $url = shift;
+
+	if( index($url, "://") < 0 ){
+		$url = "http://$url";
+	}
+
+	my $data_dir = "$TMP_DIR/$url";
+	$data_dir =~ s/:\/\//\//g;
+
+	return $data_dir;
+}
 
 sub parse_ignore_lines
 {
@@ -56,32 +67,43 @@ if( $cmd eq "check" ){
 	# 対象のページに変更がないかチェックする
 	#
 
-	# 無視行を準備
-	my @ignore_lines = `cat $data_dir/ignores`;
-	my %ignores = parse_ignore_lines(\@ignore_lines);
+	my @urls = `cat $URLS_FILE`;
 
-	# 現在のページを取得
-	if( system "curl -s $url > $data_dir/new.page" ){
-		die "curl error";
-	}
+	foreach my $url (@urls){
+		chomp($url);
+		my $data_dir = get_data_dir($url);
 
-	# 無視行を削除
-	my @lines = `cat $data_dir/new.page`;
-	my @base_lines = `cat $data_dir/base.page`; 
-
-	# 比較
-	for (my $i = 0, $num = 1; $i < $#lines; $i++, $num = $i + 1) {
-		if (exists($ignores{$num})) {
-#			print "ignore: $num\n";
-			$i += $ignores{$num} - 1;
-			next;
+		unless( -f "$data_dir/base.page" ){
+			die "not initialized. \"init\" before \"check\"";
 		}
 
-		if( $lines[$i] ne $base_lines[$i] ){
-			print "LINE $num:\n";
-			print "  NEW	$lines[$i]";
-			print "  OLD	$base_lines[$i]";
-			exit;
+		# 無視行を準備
+		my @ignore_lines = `cat $data_dir/ignores`;
+		my %ignores = parse_ignore_lines(\@ignore_lines);
+
+		# 現在のページを取得
+		if( system "curl -s $url > $data_dir/new.page" ){
+			die "curl error";
+		}
+
+		# 無視行を削除
+		my @lines = `cat $data_dir/new.page`;
+		my @base_lines = `cat $data_dir/base.page`; 
+
+		# 比較
+		for (my $i = 0, $num = 1; $i < $#lines; $i++, $num = $i + 1) {
+			if (exists($ignores{$num})) {
+	#			print "ignore: $num\n";
+				$i += $ignores{$num} - 1;
+				next;
+			}
+
+			if( $lines[$i] ne $base_lines[$i] ){
+				my $before = $lines[$i];
+				my $after = $base_lines[$i];
+				print "[DEFACEMENT] line $num $before";
+				exit;
+			}
 		}
 	}
 
@@ -91,6 +113,9 @@ if( $cmd eq "check" ){
 	# 対象のページに何回かアクセスして、動的部分を特定する
 	# 動的な部分は無視するようにする
 	#
+
+	my $url = shift; 
+	my $data_dir = get_data_dir($url);
 
 	my $count = shift;
 	$count ||= 5;
@@ -150,6 +175,8 @@ diff:
 	}
 
 	close $fh;
+
+	system "echo '$url' >> $URLS_FILE";
 
 	system "rm $data_dir/tmp.page";
 }
