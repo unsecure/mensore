@@ -12,6 +12,11 @@ unless ($out_file) {
 	die "missing out file";
 }
 
+my $user = getpwuid($>);
+if( $user ne "root" ){
+	die "must be root";
+}
+
 Proc::Daemon::Init({
 		work_dir        => '.',
 		pid_file        => 'secure.pid',

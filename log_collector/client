@@ -1,0 +1,46 @@
+#!/bin/sh
+
+export LANG=C
+
+CMD=$1
+
+PID="client.pid"
+
+start(){
+	if [ -f "$PID" ]; then
+		echo -e "already started"
+		exit 1
+	fi
+
+	if [ -z "$1" -o -z "$2" ]; then
+		echo -e "missing server or files"
+		exit 1
+	fi
+
+	./client.pl $1 $2
+
+	echo "started";
+}
+
+stop(){
+	if [ ! -f "$PID" ]; then
+		echo -e "not running"
+		exit 1
+	fi
+
+	kill -TERM `cat $PID`
+	if [ $? -eq 0 ]; then
+		rm $PID
+	fi
+
+	echo "stopped";
+}
+
+if [ "$CMD" = "start" ]; then
+	start $2 $3
+elif [ "$CMD" = "stop" ]; then
+	stop
+elif [ "$CMD" = "restart" ]; then
+	stop
+	start $2 $3
+fi	

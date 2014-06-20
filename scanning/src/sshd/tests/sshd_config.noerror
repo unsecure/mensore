@@ -1,0 +1,10 @@
+# sshd_config
+# vim: filetype=sshdconfig
+# This config is no problem
+PermitRootLogin    	     no
+#PermitRootLogin    	     no
+##PermitRootLogin    	     no
+## PermitRootLogin    	     no
+# PermitRootLogin    	     no
+# PermitRootLogin    	     yes # no problem
+Protocol 2

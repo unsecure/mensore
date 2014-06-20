@@ -19,7 +19,7 @@ use Proc::Daemon;
 
 Proc::Daemon::Init({
 		work_dir        => '.',
-		pid_file        => 'pid',
+		pid_file        => 'client.pid',
 	}
 );
 
@@ -50,7 +50,7 @@ while(my $line = readline $fh){
     chomp $line;
 	my ($name, $interval) = split(/\s+/, $line);
 	print "add $name interval=$interval\n";
-	push(@files,File::Tail->new(name=>$name,maxinterval=>$interval));
+	push(@files,File::Tail->new(name=>$name,maxinterval=>$interval,ignore_nonexistant=>1));
 }
 
 close $fh;
