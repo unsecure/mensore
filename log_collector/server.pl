@@ -13,7 +13,7 @@ unless ($out_file) {
 
 Proc::Daemon::Init({
 		work_dir        => '.',
-		pid_file        => 'pid',
+		pid_file        => 'server.pid',
 	}
 );
 

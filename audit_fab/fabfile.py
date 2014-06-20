@@ -33,8 +33,8 @@ env.password = inifile.get("user", "passwd")
 env.key_filename = inifile.get("user", "id_rsa")
 
 # デフォルトユーザの設定
-default_users = inifile.get("defalut_user", "name").split(",")
-default_passwords = inifile.get("defalut_user", "passwd").split(",")
+default_users = inifile.get("default_user", "name").split(",")
+default_passwords = inifile.get("default_user", "passwd").split(",")
 
 # ホストの設定
 portforwarded = int(inifile.get("host", "portforwarded"))
@@ -95,7 +95,7 @@ def __add_mensore():
 
         with cd(".ssh"):
             put("id_rsa_mensore.pub", "id_rsa_mensore.pub")
-            run("id_rsa_mensore.pub >> authorized_keys")
+            run("cat id_rsa_mensore.pub >> authorized_keys")
             sudo("chown mensore:users authorized_keys")
             sudo("chmod 644 authorized_keys")
             put("ssh_config_mensore", "config")
@@ -113,7 +113,10 @@ def deploy_keys_default_users():
         __deploy_keys_default_users()
 
 def __deploy_keys_default_users():
+    pass_i = 0
     for user in default_users:
+        env.user = user
+        env.password = default_passwords[pass_i]
         home_dir = "/home/" + user
         with cd(home_dir):
             if not exists(".ssh"):
@@ -122,10 +125,11 @@ def __deploy_keys_default_users():
                 sudo("chmod 700 .ssh")
             with cd(".ssh"):
                 put("id_rsa_default.pub", "id_rsa_default.pub")
-                run("id_rsa_default.pub >> authorized_keys")
+                run("cat id_rsa_default.pub >> authorized_keys")
                 sudo("chown %s:users authorized_keys" % user)
                 sudo("chmod 644 authorized_keys")
                 put("ssh_config_default", "config")
+        pass_i += 1;
 
 """
 サーバー
@@ -156,9 +160,9 @@ def __start_server():
     run("touch %s" % DIR_LOGS + "/server.log")
 
     with cd(DIR_LOG_COLLECTOR):
-        sudo("LANG=C ./server.pl %s" % DIR_LOGS + "/server.log")
+        sudo("./server start")
     with cd(DIR_DATA_COLLECTOR):
-        sudo("LANG=C ./server.pl %s" % DIR_DATA )
+        sudo("./server start")
 
 	__gen_server_cron()
     put('server.cron', DIR_BASE + "/server.cron")
@@ -178,9 +182,9 @@ def stop_server():
 
 def __stop_server():
     with cd(DIR_LOG_COLLECTOR):
-        sudo("kill -TERM `cat pid`")
+        sudo("./server stop")
     with cd(DIR_DATA_COLLECTOR):
-        sudo("kill -TERM `cat pid`")
+        sudo("./server stop")
 
     # cronの設定
     sudo("rm %s" % DIR_CRON + "/mensore-server")
@@ -226,9 +230,9 @@ def __start_client():
     run("touch %s" % DIR_LOGS + "/client.log");
 
     with cd(DIR_LOG_COLLECTOR):
-        sudo("LANG=C ./client.pl %s files.txt" % server[0])
+        sudo("./client start %s files.txt" % server[0])
     with cd(DIR_MONITORING+"/client"):
-        sudo("LANG=C ./secure.pl %s" % DIR_LOGS + "/client.log")
+        sudo("./secure start %s" % DIR_LOGS + "/client.log")
 
     # cronの設定
 	__gen_client_cron()
@@ -250,9 +254,9 @@ def stop_client():
 
 def __stop_client():
     with cd(DIR_LOG_COLLECTOR):
-        sudo("kill -TERM `cat pid`")
+        sudo("./client stop")
     with cd(DIR_MONITORING+"/client"):
-        sudo("kill -TERM `cat secure.pid`")
+        sudo("./secure stop")
 
     # cronの設定
     sudo("rm %s" % DIR_CRON + "/mensore-client")
@@ -327,7 +331,7 @@ def __gen_client_cron():
     CRON += "*/5 * * * * root cd " + DIR_MONITORING + "/client/ && ./cron.pl | " + DATA_COLLECTOR_CLIENT + " " + server[0] + " cron\n";
     CRON += "*/5 * * * * root cd " + DIR_MONITORING + "/client/ && ./at.pl | " + DATA_COLLECTOR_CLIENT + " " + server[0] + " at\n";
 
-    CRON += "*/5 * * * * root ps aux        | " + DATA_COLLECTOR_CLIENT + " " + server[0] + " ps\n";
+    CRON += "*/5 * * * * root ps auxf       | " + DATA_COLLECTOR_CLIENT + " " + server[0] + " ps\n";
     CRON += "*/5 * * * * root netstat -atnp | " + DATA_COLLECTOR_CLIENT + " " + server[0] + " netstat\n"
     CRON += "*/5 * * * * root last -n 50    | " + DATA_COLLECTOR_CLIENT + " " + server[0] + " last\n"
     CRON += "*/5 * * * * root w             | " + DATA_COLLECTOR_CLIENT + " " + server[0] + " w\n"
@@ -335,3 +339,58 @@ def __gen_client_cron():
     f.write(CRON)
     f.close()
 
+"""
+チェック系
+"""
+
+def check_date():
+	run("date")
+
+def check_hostname():
+	run("hostname")
+
+def check_os():
+	run("uname -a")
+	if exists("/etc/redhat-release"):
+		run("cat /etc/redhat-release")
+
+def check_if():
+	run("ifconfig")
+
+def check_disk():
+	run("df -H")
+
+def check_mem():
+	run("free -m")
+
+def check_uptime():
+	run("uptime")
+
+def check_login():
+	run("w")
+
+def check_users():
+	run("cat /etc/passwd")
+
+def check_groups():
+	run("cat /etc/group")
+
+def check_ps():
+	run("ps auxf")
+
+def check_netstat():
+	run("netstat -atn")
+
+def first_check():
+	check_date()
+	check_hostname()
+	check_os()
+	check_if()
+	check_disk()
+	check_mem()
+	check_uptime()
+	check_login()
+	check_users()
+	check_groups()
+	check_ps()
+	check_netstat()
