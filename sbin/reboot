@@ -1,0 +1,3 @@
+#!/bin/sh
+A=`ps h $PPID`
+echo "[REBOOT] PPID=$A" >> /home/mensore/logs/client.log
