@@ -1,0 +1,46 @@
+#!/bin/sh
+
+export LANG=C
+
+CMD=$1
+DATA="$HOME/data"
+
+if [ ! -d $DATA ]; then
+	echo -e "missing data dir: $DATA"
+	exit 1
+fi
+
+start(){
+	if [ -f "pid" ]; then
+		echo -e "already started"
+		exit 1
+	fi
+
+	./server.pl $DATA
+
+	echo "started";
+}
+
+stop(){
+	if [ ! -f "pid" ]; then
+		echo -e "not running"
+		exit 1
+	fi
+
+	kill -TERM `cat pid`
+
+	if [ $? -eq 0 ]; then
+		rm pid
+	fi
+
+	echo "stopped";
+}
+
+if [ "$CMD" = "start" ]; then
+	start
+elif [ "$CMD" = "stop" ]; then
+	stop
+elif [ "$CMD" = "restart" ]; then
+	stop
+	start
+fi	
