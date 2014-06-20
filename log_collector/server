@@ -1,0 +1,50 @@
+#!/bin/sh
+
+export LANG=C
+
+CMD=$1
+LOGS="$HOME/logs"
+
+PID="server.pid"
+
+if [ ! -d $LOGS ]; then
+	echo -e "missing logs dir: $LOGS"
+	exit 1
+fi
+
+LOG=$LOGS/server.log
+
+start(){
+	if [ -f "$PID" ]; then
+		echo -e "already started"
+		exit 1
+	fi
+
+	./server.pl $LOG
+
+	echo "started";
+}
+
+stop(){
+	if [ ! -f "$PID" ]; then
+		echo -e "not running"
+		exit 1
+	fi
+
+	kill -TERM `cat $PID`
+
+	if [ $? -eq 0 ]; then
+		rm $PID
+	fi
+
+	echo "stopped";
+}
+
+if [ "$CMD" = "start" ]; then
+	start
+elif [ "$CMD" = "stop" ]; then
+	stop
+elif [ "$CMD" = "restart" ]; then
+	stop
+	start
+fi	
