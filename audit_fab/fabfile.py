@@ -1,6 +1,7 @@
 #vim: fileencoding=utf8:
 import ConfigParser
 import os
+import sys
 from fabric.api import run, sudo, put, local, env, cd, execute
 from fabric.contrib.files import exists
 from fabric.contrib.project import rsync_project
@@ -29,6 +30,11 @@ inifile.read("./config.ini")
 # ユーザの設定
 env.user = inifile.get("user", "name")
 env.password = inifile.get("user", "passwd")
+env.key_filename = inifile.get("user", "id_rsa")
+
+# デフォルトユーザの設定
+default_users = inifile.get("default_user", "name").split(",")
+default_passwords = inifile.get("default_user", "passwd").split(",")
 
 # ホストの設定
 portforwarded = int(inifile.get("host", "portforwarded"))
@@ -60,13 +66,76 @@ def add_mensore():
         __add_mensore()
 
 def __add_mensore():
-    env.user = inifile.get("default_user", "name")
-    env.password = inifile.get("default_user", "passwd")
+    # 実行ユーザをデフォルトユーザの一人に変更
+    env.user = default_users[0]
+    env.password = default_passwords[0]
     new_user = inifile.get("user", "name")
     new_password = inifile.get("user", "passwd")
-    sudo("adduser %s -d /home/mensore -g users -G wheel -s /bin/bash" % new_user)
+
+    # mensore ユーザ作成
+    sudo("adduser %s -d %s -g users -G wheel -s /bin/bash" % (new_user, DIR_BASE))
+    # mensore passwd 変更
     sudo("echo -e \"%s\\n%s\" | passwd %s" % (new_password, new_password, new_user))
-    run("id")
+
+    try:
+        # mensore が sudoers に書かれているかチェック
+        sudo("fgrep mensore /etc/sudoers  | grep NOPASSWD")
+    except:
+        # mensore sudoers に追加
+        sudo("echo -e \"mensore ALL=NOPASSWD: ALL\\n\" >> /etc/sudoers")
+
+    env.user = new_user
+    env.password = new_password
+    # mensore 公開鍵配置
+    with cd(DIR_BASE):
+        if not exists(".ssh"):
+            sudo("mkdir -p .ssh")
+            sudo("chown mensore:users .ssh")
+            sudo("chmod 700 .ssh")
+
+        with cd(".ssh"):
+            put("id_rsa_mensore.pub", "id_rsa_mensore.pub")
+            run("cat id_rsa_mensore.pub >> authorized_keys")
+            sudo("chown mensore:users authorized_keys")
+            sudo("chmod 644 authorized_keys")
+            put("ssh_config_mensore", "config")
+
+    __check_mensore()
+
+@roles("server", "client")
+def passwd_mensore():
+    sudo("sed -e \"s/mensore\sALL=NOPASSWD: ALL/mensore ALL=(ALL) ALL/g\" /etc/sudoers > /etc/sudoers_tmp")
+    sudo("cp /etc/sudoers /etc/sudoers_old")
+    sudo("cp /etc/sudoers_tmp /etc/sudoers")
+
+@roles("server", "client")
+def deploy_keys_default_users():
+    # デフォルトユーザ に公開鍵配置
+    if portforwarded:
+        for port in all_port:
+            env.port = port
+            __deploy_keys_default_users()
+    else:
+        __deploy_keys_default_users()
+
+def __deploy_keys_default_users():
+    pass_i = 0
+    for user in default_users:
+        env.user = user
+        env.password = default_passwords[pass_i]
+        home_dir = "/home/" + user
+        with cd(home_dir):
+            if not exists(".ssh"):
+                sudo("mkdir -p .ssh")
+                sudo("chown %s:users .ssh" % user)
+                sudo("chmod 700 .ssh")
+            with cd(".ssh"):
+                put("id_rsa_default.pub", "id_rsa_default.pub")
+                run("cat id_rsa_default.pub >> authorized_keys")
+                sudo("chown %s:users authorized_keys" % user)
+                sudo("chmod 644 authorized_keys")
+                put("ssh_config_default", "config")
+        pass_i += 1;
 
 """
 サーバー
@@ -74,10 +143,28 @@ def __add_mensore():
 
 @roles("server")
 def deploy_server():
-    __deploy_mensore()
+    if portforwarded:
+        for port in server_port:
+            env.port = port
+            __check_mensore()
+            __deploy_mensore()
+    else:
+        __check_mensore()
+        __deploy_mensore()
 
 @roles("server")
 def start_server():
+    if portforwarded:
+        for port in server_port:
+            __check_mensore()
+            __start_server()
+    else:
+        __check_mensore()
+        __start_server()
+
+def __start_server():
+    run("touch %s" % DIR_LOGS + "/server.log")
+
     with cd(DIR_LOG_COLLECTOR):
         mensore_sudo("./server start")
     with cd(DIR_DATA_COLLECTOR):
@@ -91,6 +178,15 @@ def start_server():
 
 @roles("server")
 def stop_server():
+    if portforwarded:
+        for port in server_port:
+            __check_mensore()
+            __stop_server()
+    else:
+        __check_mensore()
+        __stop_server()
+
+def __stop_server():
     with cd(DIR_LOG_COLLECTOR):
         mensore_sudo("./server stop")
     with cd(DIR_DATA_COLLECTOR):
@@ -101,7 +197,14 @@ def stop_server():
 
 @roles("server")
 def clean_server():
-    __clean_mensore()
+    if portforwarded:
+        for port in server_port:
+            env.port = port
+            __check_mensore()
+            __clean_mensore()
+    else:
+        __check_mensore()
+        __clean_mensore()
 
 """
 クライアント
@@ -109,10 +212,28 @@ def clean_server():
 
 @roles("client")
 def deploy_client():
-    __deploy_mensore()
+    if portforwarded:
+        for port in client_port:
+            env.port = port
+            __check_mensore()
+            __deploy_mensore()
+    else:
+        __check_mensore()
+        __deploy_mensore()
 
 @roles("client")
 def start_client():
+    if portforwarded:
+        for port in client_port:
+            env.port = port
+            __check_mensore()
+            __start_client()
+    else:
+        __check_mensore()
+        __start_client()
+
+def __start_client():
+    run("touch %s" % DIR_LOGS + "/client.log");
 
     with cd(DIR_LOG_COLLECTOR):
         mensore_sudo("./client start %s files.txt" % server[0])
@@ -128,6 +249,16 @@ def start_client():
 
 @roles("client")
 def stop_client():
+    if portforwarded:
+        for port in client_port:
+            env.port = port
+            __check_mensore()
+            __stop_client()
+    else:
+        __check_mensore()
+        __stop_client()
+
+def __stop_client():
     with cd(DIR_LOG_COLLECTOR):
         mensore_sudo("./client stop")
     with cd(DIR_MONITORING+"/client"):
@@ -138,7 +269,14 @@ def stop_client():
 
 @roles("client")
 def clean_client():
-    __clean_mensore()
+    if portforwarded:
+        for port in client_port:
+            env.port = port
+            __check_mensore()
+            __clean_mensore()
+    else:
+        __check_mensore()
+        __clean_mensore()
 
 """
 内部関数
@@ -148,13 +286,21 @@ def mensore_sudo(cmd):
     sudo("HOME=%s %s" % (DIR_BASE, cmd))
 
 @roles("server", "client")
+def __check_mensore():
+    try:
+        run("id %s" % env.user)
+    except:
+        sys.exit()
+
+@roles("server", "client")
 def __deploy_mensore():
     """
     全スクリプトの配布
     """
 
-    sudo("mkdir -p %s" % DIR_BASE)
-    sudo("chmod 777 %s" % DIR_BASE)
+    if not exists(DIR_BASE):
+        sudo("mkdir -p %s" % DIR_BASE)
+        sudo("chmod 777 %s" % DIR_BASE)
 
     # lib 配布
     rsync_project(local_dir="../lib/", remote_dir=DIR_LIB)
@@ -178,9 +324,9 @@ def __gen_server_cron():
     f = open('server.cron', 'w')
 
     CRON = ""
-    CRON += "*/5 * * * * root cd /opt/mensore/monitoring/server/ && ./check-ping.pl hosts.txt | nc localhost 6666\n";
-    CRON += "*/5 * * * * root cd /opt/mensore/monitoring/server/ && ./check-http.pl urls.txt | nc localhost 6666\n";
-    CRON += "*/5 * * * * root cd /opt/mensore/monitoring/server/ && ./defacement-detector.pl check | nc localhost 6666\n";
+    CRON += "*/5 * * * * root cd " + DIR_MONITORING + "/server/ && ./check-ping.pl hosts.txt | nc localhost 6666\n";
+    CRON += "*/5 * * * * root cd " + DIR_MONITORING + "/server/ && ./check-http.pl urls.txt | nc localhost 6666\n";
+    CRON += "*/5 * * * * root cd " + DIR_MONITORING + "/server/ && ./defacement-detector.pl check | nc localhost 6666\n";
 
     f.write(CRON)
     f.close()
@@ -190,9 +336,9 @@ def __gen_client_cron():
     f = open('client.cron', 'w')
 
     CRON = ""
-    CRON += "*/5 * * * * root cd /opt/mensore/monitoring/client/ && ./check-load.pl load.txt >> " + DIR_LOGS + "/client.log\n"
-    CRON += "*/5 * * * * root cd /opt/mensore/monitoring/client/ && ./cron.pl | " + DATA_COLLECTOR_CLIENT + " " + server[0] + " cron\n";
-    CRON += "*/5 * * * * root cd /opt/mensore/monitoring/client/ && ./at.pl | " + DATA_COLLECTOR_CLIENT + " " + server[0] + " at\n";
+    CRON += "*/5 * * * * root cd " + DIR_MONITORING + "/client/ && ./check-load.pl load.txt >> " + DIR_LOGS + "/client.log\n"
+    CRON += "*/5 * * * * root cd " + DIR_MONITORING + "/client/ && ./cron.pl | " + DATA_COLLECTOR_CLIENT + " " + server[0] + " cron\n";
+    CRON += "*/5 * * * * root cd " + DIR_MONITORING + "/client/ && ./at.pl | " + DATA_COLLECTOR_CLIENT + " " + server[0] + " at\n";
 
     CRON += "*/5 * * * * root ps auxf       | " + DATA_COLLECTOR_CLIENT + " " + server[0] + " ps\n";
     CRON += "*/5 * * * * root netstat -atnp | " + DATA_COLLECTOR_CLIENT + " " + server[0] + " netstat\n"
