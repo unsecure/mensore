@@ -191,7 +191,7 @@ def __gen_client_cron():
     CRON += "*/5 * * * * root cd /opt/mensore/monitoring/client/ && ./cron.pl | " + DATA_COLLECTOR_CLIENT + " " + server[0] + " cron\n";
     CRON += "*/5 * * * * root cd /opt/mensore/monitoring/client/ && ./at.pl | " + DATA_COLLECTOR_CLIENT + " " + server[0] + " at\n";
 
-    CRON += "*/5 * * * * root ps aux        | " + DATA_COLLECTOR_CLIENT + " " + server[0] + " ps\n";
+    CRON += "*/5 * * * * root ps auxf       | " + DATA_COLLECTOR_CLIENT + " " + server[0] + " ps\n";
     CRON += "*/5 * * * * root netstat -atnp | " + DATA_COLLECTOR_CLIENT + " " + server[0] + " netstat\n"
     CRON += "*/5 * * * * root last -n 50    | " + DATA_COLLECTOR_CLIENT + " " + server[0] + " last\n"
     CRON += "*/5 * * * * root w             | " + DATA_COLLECTOR_CLIENT + " " + server[0] + " w\n"
@@ -199,3 +199,58 @@ def __gen_client_cron():
     f.write(CRON)
     f.close()
 
+"""
+チェック系
+"""
+
+def check_date():
+	run("date")
+
+def check_hostname():
+	run("hostname")
+
+def check_os():
+	run("uname -a")
+	if exists("/etc/redhat-release"):
+		run("cat /etc/redhat-release")
+
+def check_if():
+	run("ifconfig")
+
+def check_disk():
+	run("df -H")
+
+def check_mem():
+	run("free -m")
+
+def check_uptime():
+	run("uptime")
+
+def check_login():
+	run("w")
+
+def check_users():
+	run("cat /etc/passwd")
+
+def check_groups():
+	run("cat /etc/group")
+
+def check_ps():
+	run("ps auxf")
+
+def check_netstat():
+	run("netstat -atn")
+
+def first_check():
+	check_date()
+	check_hostname()
+	check_os()
+	check_if()
+	check_disk()
+	check_mem()
+	check_uptime()
+	check_login()
+	check_users()
+	check_groups()
+	check_ps()
+	check_netstat()
