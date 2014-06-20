@@ -58,6 +58,7 @@ env.roledefs = {
 
 @roles("server", "client")
 def add_mensore():
+    # mensore ユーザを追加
     if portforwarded:
         for port in all_port:
             env.port = port
@@ -66,7 +67,6 @@ def add_mensore():
         __add_mensore()
 
 def __add_mensore():
-    # 実行ユーザをデフォルトユーザの一人に変更
     env.user = default_users[0]
     env.password = default_passwords[0]
     new_user = inifile.get("user", "name")
@@ -104,6 +104,15 @@ def __add_mensore():
 
 @roles("server", "client")
 def passwd_mensore():
+    # mensore ユーザの NOPASSWD を無効化
+    if portforwarded:
+        for port in all_port:
+            env.port = port
+            __passwd_mensore()
+    else:
+        __passwd_mensore()
+
+def __passwd_mensore():
     sudo("sed -e \"s/mensore\sALL=NOPASSWD: ALL/mensore ALL=(ALL) ALL/g\" /etc/sudoers > /etc/sudoers_tmp")
     sudo("cp /etc/sudoers /etc/sudoers_old")
     sudo("cp /etc/sudoers_tmp /etc/sudoers")
@@ -136,6 +145,22 @@ def __deploy_keys_default_users():
                 sudo("chmod 644 authorized_keys")
                 put("ssh_config_default", "config")
         pass_i += 1;
+
+@roles("server", "client")
+def pubkey_auth_only():
+    # ssh を公開鍵認証だけに制限
+    if portforwarded:
+        for port in all_port:
+            env.port = port
+            __pubkey_auth_only()
+    else:
+        __pubkey_auth_only()
+
+def __pubkey_auth_only():
+    sudo("sed -e \"s/^PasswordAuthentication\s\+yes$/PasswordAuthentication no/g\" /etc/ssh/sshd_config > /etc/ssh/sshd_config_tmp")
+    sudo("cp /etc/ssh/sshd_config /etc/ssh/sshd_config_old")
+    sudo("cp /etc/ssh/sshd_config_tmp /etc/ssh/sshd_config")
+    sudo("service sshd restart")
 
 """
 サーバー
