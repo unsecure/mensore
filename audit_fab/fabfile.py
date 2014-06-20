@@ -79,9 +79,9 @@ def deploy_server():
 @roles("server")
 def start_server():
     with cd(DIR_LOG_COLLECTOR):
-        sudo("./server start")
+        mensore_sudo("./server start")
     with cd(DIR_DATA_COLLECTOR):
-        sudo("./server start")
+        mensore_sudo("./server start")
 
 	__gen_server_cron()
     put('server.cron', DIR_BASE + "/server.cron")
@@ -92,9 +92,9 @@ def start_server():
 @roles("server")
 def stop_server():
     with cd(DIR_LOG_COLLECTOR):
-        sudo("./server stop")
+        mensore_sudo("./server stop")
     with cd(DIR_DATA_COLLECTOR):
-        sudo("./server stop")
+        mensore_sudo("./server stop")
 
     # cronの設定
     sudo("rm %s" % DIR_CRON + "/mensore-server")
@@ -115,9 +115,9 @@ def deploy_client():
 def start_client():
 
     with cd(DIR_LOG_COLLECTOR):
-        sudo("./client start %s files.txt" % server[0])
+        mensore_sudo("./client start %s files.txt" % server[0])
     with cd(DIR_MONITORING+"/client"):
-        sudo("./secure start %s" % DIR_LOGS + "/client.log")
+        mensore_sudo("./secure start %s" % DIR_LOGS + "/client.log")
 
     # cronの設定
 	__gen_client_cron()
@@ -129,9 +129,9 @@ def start_client():
 @roles("client")
 def stop_client():
     with cd(DIR_LOG_COLLECTOR):
-        sudo("./client stop")
+        mensore_sudo("./client stop")
     with cd(DIR_MONITORING+"/client"):
-        sudo("./secure stop")
+        mensore_sudo("./secure stop")
 
     # cronの設定
     sudo("rm %s" % DIR_CRON + "/mensore-client")
@@ -143,6 +143,9 @@ def clean_client():
 """
 内部関数
 """
+
+def mensore_sudo(cmd):
+    sudo("HOME=%s %s" % (DIR_BASE, cmd))
 
 @roles("server", "client")
 def __deploy_mensore():
@@ -241,6 +244,7 @@ def check_ps():
 def check_netstat():
 	run("netstat -atn")
 
+@roles("client")
 def first_check():
 	check_date()
 	check_hostname()

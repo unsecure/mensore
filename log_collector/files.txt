@@ -1,1 +1,1 @@
-/opt/mensore/logs/client.log	1
+/home/mensore/logs/client.log	1
