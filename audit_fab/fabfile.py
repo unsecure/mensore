@@ -103,6 +103,12 @@ def __add_mensore():
     __check_mensore()
 
 @roles("server", "client")
+def passwd_mensore():
+    sudo("sed -e \"s/mensore\sALL=NOPASSWD: ALL/mensore ALL=(ALL) ALL/g\" /etc/sudoers > /etc/sudoers_tmp")
+    sudo("cp /etc/sudoers /etc/sudoers_old")
+    sudo("cp /etc/sudoers_tmp /etc/sudoers")
+
+@roles("server", "client")
 def deploy_keys_default_users():
     # デフォルトユーザ に公開鍵配置
     if portforwarded:
