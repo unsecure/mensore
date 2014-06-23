@@ -7,10 +7,11 @@
 クライアントを起動し、データを送信する
 
 ```
-ps aux | ./client.pl ps
+ps aux | ./client.pl hostname ps
 ```
 
-client.plの第一引数にデータのタグを指定する
+client.plの第一引数にサーバホストを指定する
+client.plの第二引数にデータのタグを指定する
 
 標準入力に与えられたデータがサーバー側に保存される
 
