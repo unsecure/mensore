@@ -43,4 +43,7 @@ elif [ "$CMD" = "stop" ]; then
 elif [ "$CMD" = "restart" ]; then
 	stop
 	start $2 $3
+else
+	echo "unknown command [$CMD]"
+	exit 1
 fi	
