@@ -7,7 +7,7 @@
 クライアントを起動する
 
 ```
-./client.pl files
+./client.pl remotehost files
 ```
 
 filesは監視ログと監視間隔(秒)を1行ごとにかく
